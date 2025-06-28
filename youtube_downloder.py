@@ -6,6 +6,7 @@ import time
 from PIL import Image
 import tkinter
 import threading
+import requests
 
 Video_Quality = {'指定なし(最高)':'',
                  '480p':'[height<=480]',
@@ -38,10 +39,23 @@ class tube_sync(ctk.CTk):
 
         self.wlog("checking files...")
 
+        #source
+        self.source_path = os.path.join(self.CURRENT_PATH, 'source')
+        if not os.path.exists(self.source_path):
+            self.wlog("make source directory")
+            os.makedirs(self.source_path)
+        else:
+            self.wlog("source loaded successfully")
+
         #logo
-        self.logo_path = os.path.join(self.CURRENT_PATH, 'logo.png')
+        self.logo_path = os.path.join(self.source_path, 'logo.png')
         if not os.path.exists(self.logo_path):
             self.wlog("failed to load logo.png")
+            self.wlog("download logo.png in source directory")
+            url = "https://github.com/Meron530/youtube.git"
+            r = requests.get(url).content
+            with open(self.source_path, 'wb') as f:
+                f.write(r)
             exit()
         else:
             self.wlog("logo.png loaded successfully")
