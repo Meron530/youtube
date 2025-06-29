@@ -9,8 +9,8 @@ import tkinter
 import threading
 import requests
 import shutil
-import glob
-import re
+import ctypes
+
 
 Video_Quality = {'指定なし(最高)':'',
                  '480p':'[height<=480]',
@@ -140,7 +140,7 @@ class tube_sync(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
 
         #Main Frame
-        self.main_frame = ctk.CTkFrame(self, width=1280, height=720)
+        self.main_frame = ctk.CTkFrame(self, width=1080, height=720)
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(0,weight=1)
         self.main_frame.grid_columnconfigure(1,weight=1)
@@ -168,37 +168,54 @@ class tube_sync(ctk.CTk):
         self.output_file_button = ctk.CTkButton(self.url_frame,text="ダウンロード先ファイル",command=self.explorer_open)
         self.output_file_button.grid(row=4,column=0,padx=20,pady=10, sticky=ctk.EW)
 
-        #Setting Frame
-        self.setting_frame = ctk.CTkFrame(self.main_frame)
-        self.setting_frame.grid(row=0,column=1,padx=20,pady=20)
-        self.setting_frame.grid_rowconfigure(5,weight=1)
+        #Video Frame
+        self.video_frame = ctk.CTkFrame(self.main_frame)
+        self.video_frame.grid(row=0,column=1,padx=20, pady=20, sticky=ctk.NSEW)
+        self.video_frame.grid_rowconfigure(0, weight=1)
+        self.video_frame.grid_columnconfigure(0, weight=1)
 
-        self.video_label = ctk.CTkLabel(self.setting_frame,text='ビデオ画質')
-        self.video_label.grid(row=0,column=0,padx=20,pady=10)
+        self.video_image_frame = ctk.CTkFrame(self.video_frame)
+        self.video_image_frame.grid(row=0,column=0,padx=20,pady=20, sticky=ctk.NE+ctk.EW)
+        
+        self.video_image_label = ctk.CTkLabel(self.video_image_frame, text="", width=720 / 1.3, height=480 / 1.3)
+        self.video_image_label.grid(row=0,column=0,sticky=ctk.NSEW)
+        self.Video_Name_label = ctk.CTkLabel(self.video_image_frame, text="", font=ctk.CTkFont(size=15, weight="bold"), width=720 / 1.3)
+        self.Video_Name_label.grid(row=1,column=0,sticky=ctk.EW)
 
-        self.video_option = ctk.CTkComboBox(self.setting_frame, values=list(Video_Quality.keys()),width=500)
-        self.video_option.grid(row=1,column=0,padx=20,pady=30)
+        self.video_info_frame = ctk.CTkFrame(self.video_frame)
+        self.video_info_frame.grid(row=1,column=0,padx=20,pady=20, sticky=ctk.NSEW)
+        self.video_info_frame.grid_rowconfigure(0,weight=1)
+        self.video_info_frame.grid_columnconfigure(0,weight=1)
 
-        self.video_label = ctk.CTkLabel(self.setting_frame,text='コーデック')
-        self.video_label.grid(row=2,column=0,padx=20,pady=10)
+        self.video_label = ctk.CTkLabel(self.video_info_frame,text='ビデオ画質', width=720 / 1.3)
+        self.video_label.grid(row=0,column=0)
 
-        self.video_codec_option = ctk.CTkComboBox(self.setting_frame, values=list(Video_Codec.keys()),width=500)
+        self.video_option = ctk.CTkComboBox(self.video_info_frame, values=list(Video_Quality.keys()), width=500)
+        self.video_option.grid(row=1,column=0)
+
+        self.video_label = ctk.CTkLabel(self.video_info_frame,text='コーデック')
+        self.video_label.grid(row=2,column=0)
+
+        self.video_codec_option = ctk.CTkComboBox(self.video_info_frame, values=list(Video_Codec.keys()),width=500)
         self.video_codec_option.set("vp09")
-        self.video_codec_option.grid(row=3,column=0,padx=20,pady=30)
+        self.video_codec_option.grid(row=3,column=0)
+
+        self.switch_label = ctk.CTkLabel(self.video_info_frame)
+        self.switch_label.grid(row=4,column=0, sticky=ctk.EW, padx=10, pady=10)
 
         self.darkmode_switch_var = ctk.StringVar(value="on")
-        self.darkmode_switch = ctk.CTkSwitch(self.setting_frame,text='ダークモード', command=self.darkmode_switch_event,variable=self.darkmode_switch_var, onvalue="on", offvalue="off")
-        self.darkmode_switch.grid(row=4,column=0,padx=20,pady=10)
+        self.darkmode_switch = ctk.CTkSwitch(self.switch_label,text='ダークモード', command=self.darkmode_switch_event,variable=self.darkmode_switch_var, onvalue="on", offvalue="off")
+        self.darkmode_switch.grid(row=0,column=0)
 
         self.mp3_switch_var = ctk.StringVar(value="off")
-        self.mp3_switch = ctk.CTkSwitch(self.setting_frame,text='mp3形式にする(最高音質のみ)',variable=self.mp3_switch_var, onvalue="on", offvalue="off")
-        self.mp3_switch.grid(row=5,column=0,padx=20,pady=10)
+        self.mp3_switch = ctk.CTkSwitch(self.switch_label,text='mp3形式にする(最高音質のみ)',variable=self.mp3_switch_var, onvalue="on", offvalue="off")
+        self.mp3_switch.grid(row=0,column=1)
 
         time.sleep(2)
-        self.start_frame.destroy()
         self.main_frame.grid(row=0,column=0, sticky=ctk.NSEW)
 
         self.wlog("wedget initialized successfully")
+        self.wlog("\n===========\n")
 
     #image download
     def download_image(self, url, path):
@@ -257,8 +274,20 @@ class tube_sync(ctk.CTk):
             box = self.url_boxes.pop(-1)
             box.destroy()
 
-    #ダウンロード
+    #start download thread
     def download_video(self):
+
+        self.video_download_bar = ctk.CTkProgressBar(self.video_image_frame, width=720 / 1.3, mode='determinate', progress_color=("cyan", "gray"))
+        self.video_download_bar.grid(row=2,column=0,sticky=ctk.EW)
+
+        download_thread = threading.Thread(target=self.download_video_thread)
+        download_thread.start()
+
+
+    #ダウンロード
+    def download_video_thread(self):
+
+        self.video_download_bar.start()
 
         self.output_button.configure(text="ダウンロード中...")
         self.update()
@@ -267,7 +296,7 @@ class tube_sync(ctk.CTk):
         download_path = os.getcwd()
 
         # 環境変数の設定
-        path = os.path.join(path, r'ffmpeg\bin')
+        path = os.path.join(path, r'source\ffmpeg\bin')
         os.environ['PATH'] = path
 
         # os.system('ffmpeg')
@@ -285,14 +314,22 @@ class tube_sync(ctk.CTk):
             URL_PATH = url_box.get()
 
             ydl_opts = {
-                'wtite-thumbnail': True,
-                'outtmpl' : download_path + '%(title)s',
-                'skip_download': True
+                'writethumbnail': True,
+                'outtmpl' : download_path + '/output/' + '%(title)s',
+                'skip_download': True,
+                'nooverwrites': True
             }
 
+            title = ""
             with YoutubeDL(ydl_opts) as ydl:
-                print(ydl_opts)
+                info = ydl.extract_info(URL_PATH, download=False)
+                title = info.get('title', None)
                 ydl.download([URL_PATH])
+
+            #display thumbnail
+            #self.image_label = ctk.CTkLabel(self.video_image_frame, text="", image=ctk.CTkImage(Image.open(download_path + '/output/' + title + '.webp'), size=(720 / 1.3, 480 / 1.3)))
+            self.video_image_label.configure(image=ctk.CTkImage(Image.open(download_path + '/output/' + title + '.webp'), size=(720 / 1.3, 480 / 1.3)))
+            self.Video_Name_label.configure(text=title)
 
             #最高の画質と音質を動画をダウンロードする
             if self.mp3_switch.get() == "on":
@@ -315,10 +352,14 @@ class tube_sync(ctk.CTk):
 
             #動画のURLを指定
             with YoutubeDL(ydl_opts) as ydl:
-                print(ydl_opts)
                 ydl.download([URL_PATH])
-            
+
+            self.video_image_label.configure(image=None)
+            os.remove(download_path + '/output/' + title + '.webp')
+            self.Video_Name_label.configure(text="")
+
         self.output_button.configure(text="ダウンロード終了")
+        self.video_download_bar.destroy()
 
     #write for log
     def wlog(self, text):
@@ -332,9 +373,14 @@ class tube_sync(ctk.CTk):
 
     #CustomTkinter独自のアイコン変更
     def icon_change(self,path):
-        self.iconphoto(False, tkinter.PhotoImage(file=path))
+        myappid = u'meron.tubesync.youtube.1'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+
+        self.iconphoto(True, tkinter.PhotoImage(file=path))
         self.after(201, lambda :self.iconphoto(False, tkinter.PhotoImage(file=path)))
 
 if __name__ == "__main__":
     app = tube_sync()
     app.mainloop()
+    app.wlog("TubuSync closed")
