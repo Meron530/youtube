@@ -1,3 +1,4 @@
+import requests.exceptions
 from yt_dlp import YoutubeDL
 import os
 import subprocess
@@ -7,6 +8,7 @@ from PIL import Image
 import tkinter
 import threading
 import requests
+import shutil
 
 Video_Quality = {'指定なし(最高)':'',
                  '480p':'[height<=480]',
@@ -51,32 +53,27 @@ class tube_sync(ctk.CTk):
         self.logo_path = os.path.join(self.source_path, 'logo.png')
         if not os.path.exists(self.logo_path):
             self.wlog("failed to load logo.png")
+
             self.wlog("download logo.png in source directory")
-            url = "https://github.com/Meron530/youtube.git"
-            r = requests.get(url).content
-            with open(self.source_path, 'wb') as f:
-                f.write(r)
-            exit()
+            self.download_image("https://raw.githubusercontent.com/Meron530/youtube/main/source/logo.png", self.logo_path)
+            self.wlog("logo.png downloaded successfully")
+
         else:
             self.wlog("logo.png loaded successfully")
 
         #start image
-        self.start_png_path = os.path.join(self.CURRENT_PATH, 'start.png')
+        self.start_png_path = os.path.join(self.source_path, 'start.png')
         if not os.path.exists(self.start_png_path):
             self.wlog("failed to load start.png")
-            exit()
+            
+            self.wlog("download start.png in source directory")
+            self.download_image("https://raw.githubusercontent.com/Meron530/youtube/main/source/start.png", self.start_png_path)
+            self.wlog("start.png downloaded successfully")
+
         else:
             self.wlog("start.png loaded successfully")
 
-        #ffmpeg
-        if not os.path.exists(os.path.join(self.CURRENT_PATH, 'ffmpeg', 'bin', 'ffmpeg.exe')):
-            self.wlog("failed to check ffmpeg")
-            exit()
-        else:
-            self.wlog("ffmpeg check successfully")
-
         self.wlog("checking files completed successfully")
-        self.wlog("TubuSync initializing...")
 
         #initialize customtkinter
         self.wlog("customtkinter initializing...")
@@ -99,7 +96,7 @@ class tube_sync(ctk.CTk):
         self.start_frame = ctk.CTkFrame(self, width=500, height=500)
         self.start_canvas = ctk.CTkCanvas(self.start_frame, width=500, height=500)
 
-        self.start_photo = ctk.CTkImage(Image.open("start.png"),size=(500,500))
+        self.start_photo = ctk.CTkImage(Image.open(self.start_png_path),size=(500,500))
         self.start_label = ctk.CTkLabel(self.start_canvas, text="",image=self.start_photo,width=500,height=500)
         self.start_label.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
         self.start_canvas.grid(row=0,column=0)
@@ -119,7 +116,18 @@ class tube_sync(ctk.CTk):
 
     def wedget(self):
 
-        self.wlog("setting up wedget...")
+        self.wlog("\n===========\nsetting up wedget...")
+
+        #file check
+        #ffmpeg
+        self.ffmpeg_path = os.path.join(self.source_path, 'ffmpeg')
+        if not os.path.exists(self.ffmpeg_path):
+            self.wlog("failed to check ffmpeg")
+            self.download_zip("https://raw.githubusercontent.com/Meron530/youtube/main/source/ffmpeg", self.ffmpeg_path)
+            self.quit()
+        else:
+            self.wlog("ffmpeg check successfully")
+
 
         #set resize
         self.grid_rowconfigure(0, weight=1)
@@ -185,6 +193,40 @@ class tube_sync(ctk.CTk):
         self.main_frame.grid(row=0,column=0, sticky=ctk.NSEW)
 
         self.wlog("wedget initialized successfully")
+
+    #image download
+    def download_image(self, url, path):
+
+        try:
+
+            r = requests.get(url, timeout=10)
+            r.raise_for_status()
+
+            if r.headers['Content-Type'] != 'image/png':
+                self.wlog(f'failed to download {url}, content type is not image/png')
+                exit()
+            
+            with open(path, 'wb') as f:
+                    f.write(r.content)
+
+        except requests.exceptions.HTTPError as e:
+                self.wlog("HTTPError: " + str(e))
+                self.quit()
+
+    #zip download
+    def download_zip(self, url, path):
+
+        try:
+
+            r = requests.get(url, timeout=10)
+            r.raise_for_status()
+
+            with open(path, 'wb') as f:
+                f.write(r.content)
+        
+        except requests.exceptions.HTTPError as e:
+                self.wlog("HTTPError: " + str(e))
+                self.quit()
 
     #ダークモードボタン
     def darkmode_switch_event(self):
