@@ -9,6 +9,8 @@ import tkinter
 import threading
 import requests
 import shutil
+import glob
+import re
 
 Video_Quality = {'指定なし(最高)':'',
                  '480p':'[height<=480]',
@@ -123,8 +125,12 @@ class tube_sync(ctk.CTk):
         self.ffmpeg_path = os.path.join(self.source_path, 'ffmpeg')
         if not os.path.exists(self.ffmpeg_path):
             self.wlog("failed to check ffmpeg")
-            self.download_zip("https://raw.githubusercontent.com/Meron530/youtube/main/source/ffmpeg", self.ffmpeg_path)
-            self.quit()
+
+            self.wlog("download ffmpeg in source directory")
+            self.download_zip('https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip', self.ffmpeg_path + '.zip')
+            os.rename(self.ffmpeg_path + '-master-latest-win64-gpl-shared', self.ffmpeg_path)
+            self.wlog("ffmpeg downloaded successfully")
+
         else:
             self.wlog("ffmpeg check successfully")
 
@@ -223,6 +229,10 @@ class tube_sync(ctk.CTk):
 
             with open(path, 'wb') as f:
                 f.write(r.content)
+
+            #unzip
+            shutil.unpack_archive(path, self.source_path, 'zip')
+            os.remove(path)
         
         except requests.exceptions.HTTPError as e:
                 self.wlog("HTTPError: " + str(e))
