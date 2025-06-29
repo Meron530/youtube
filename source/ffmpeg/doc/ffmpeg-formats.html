@@ -304,6 +304,10 @@
       <li><a id="toc-Options-34" href="#Options-34">4.73.1 Options</a></li>
       <li><a id="toc-Example-10" href="#Example-10">4.73.2 Example</a></li>
     </ul></li>
+    <li><a id="toc-whip-1" href="#whip-1">4.74 whip</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-Options-35" href="#Options-35">4.74.1 Options</a></li>
+    </ul></li>
   </ul></li>
   <li><a id="toc-Metadata-2" href="#Metadata-2">5 Metadata</a></li>
   <li><a id="toc-See-Also" href="#See-Also">6 See Also</a></li>
@@ -6309,6 +6313,60 @@ attribute of the &lsquo;<samp class="samp">MPD</samp>&rsquo; element. Default: 6
        -adaptation_sets &quot;id=0,streams=0,1 id=1,streams=2,3&quot; \
        manifest.xml
 </pre></div>
+
+<a class="anchor" id="whip"></a><a name="whip-1"></a>
+<h3 class="section">4.74 whip<span class="pull-right"><a class="anchor hidden-xs" href="#whip-1" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-whip-1" aria-hidden="true">TOC</a></span></h3>
+
+<p>WebRTC (Real-Time Communication) muxer that supports sub-second latency streaming according to
+the WHIP (WebRTC-HTTP ingestion protocol) specification.
+</p>
+<p>This is an experimental feature.
+</p>
+<p>It uses HTTP as a signaling protocol to exchange SDP capabilities and ICE lite candidates. Then,
+it uses STUN binding requests and responses to establish a session over UDP. Subsequently, it
+initiates a DTLS handshake to exchange the SRTP encryption keys. Lastly, it splits video and
+audio frames into RTP packets and encrypts them using SRTP.
+</p>
+<p>Ensure that you use H.264 without B frames and Opus for the audio codec. For example, to convert
+an input file with <code class="command">ffmpeg</code> to WebRTC:
+</p><div class="example">
+<pre class="example-preformatted">ffmpeg -re -i input.mp4 -acodec libopus -ar 48000 -ac 2 \
+  -vcodec libx264 -profile:v baseline -tune zerolatency -threads 1 -bf 0 \
+  -f whip &quot;http://localhost:1985/rtc/v1/whip/?app=live&amp;stream=livestream&quot;
+</pre></div>
+
+<p>For this example, we have employed low latency options, resulting in an end-to-end latency of
+approximately 150ms.
+</p>
+<a name="Options-35"></a>
+<h4 class="subsection">4.74.1 Options<span class="pull-right"><a class="anchor hidden-xs" href="#Options-35" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Options-35" aria-hidden="true">TOC</a></span></h4>
+
+<p>This muxer supports the following options:
+</p>
+<dl class="table">
+<dt><samp class="option">handshake_timeout <var class="var">integer</var></samp></dt>
+<dd><p>Set the timeout in milliseconds for ICE and DTLS handshake.
+Default value is 5000.
+</p>
+</dd>
+<dt><samp class="option">pkt_size <var class="var">integer</var></samp></dt>
+<dd><p>Set the maximum size, in bytes, of RTP packets that send out.
+Default value is 1500.
+</p>
+</dd>
+<dt><samp class="option">authorization <var class="var">string</var></samp></dt>
+<dd><p>The optional Bearer token for WHIP Authorization.
+</p>
+</dd>
+<dt><samp class="option">cert_file <var class="var">string</var></samp></dt>
+<dd><p>The optional certificate file path for DTLS.
+</p>
+</dd>
+<dt><samp class="option">key_file <var class="var">string</var></samp></dt>
+<dd><p>The optional private key file path for DTLS.
+</p>
+</dd>
+</dl>
 
 <a class="anchor" id="metadata"></a><a name="Metadata-2"></a>
 <h2 class="chapter">5 Metadata<span class="pull-right"><a class="anchor hidden-xs" href="#Metadata-2" aria-hidden="true">#</a> <a class="anchor hidden-xs"href="#toc-Metadata-2" aria-hidden="true">TOC</a></span></h2>

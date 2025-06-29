@@ -366,6 +366,12 @@ and the &quot;Last message repeated n times&quot; line will be omitted.
 line. This can be used as an alternative to log coloring, e.g. when dumping the
 log to file.
 </p></dd>
+<dt>&lsquo;<samp class="samp">time</samp>&rsquo;</dt>
+<dd><p>Indicates that log lines should be prefixed with time information.
+</p></dd>
+<dt>&lsquo;<samp class="samp">datetime</samp>&rsquo;</dt>
+<dd><p>Indicates that log lines should be prefixed with date and time information.
+</p></dd>
 </dl>
 <p>Flags can also be used alone by adding a &rsquo;+&rsquo;/&rsquo;-&rsquo; prefix to set/reset a single
 flag without affecting other <var class="var">flags</var> or changing <var class="var">loglevel</var>. When
@@ -691,14 +697,6 @@ stream.
 </p>
 <p>All the container format information is printed within a section with
 name &quot;FORMAT&quot;.
-</p>
-</dd>
-<dt><samp class="option">-show_format_entry <var class="var">name</var></samp></dt>
-<dd><p>Like <samp class="option">-show_format</samp>, but only prints the specified entry of the
-container format information, rather than all. This option may be given more
-than once, then all specified entries will be shown.
-</p>
-<p>This option is deprecated, use <code class="code">show_entries</code> instead.
 </p>
 </dd>
 <dt><samp class="option">-show_entries <var class="var">section_entries</var></samp></dt>

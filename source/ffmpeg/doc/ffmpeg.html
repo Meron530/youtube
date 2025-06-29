@@ -1068,6 +1068,12 @@ and the &quot;Last message repeated n times&quot; line will be omitted.
 line. This can be used as an alternative to log coloring, e.g. when dumping the
 log to file.
 </p></dd>
+<dt>&lsquo;<samp class="samp">time</samp>&rsquo;</dt>
+<dd><p>Indicates that log lines should be prefixed with time information.
+</p></dd>
+<dt>&lsquo;<samp class="samp">datetime</samp>&rsquo;</dt>
+<dd><p>Indicates that log lines should be prefixed with date and time information.
+</p></dd>
 </dl>
 <p>Flags can also be used alone by adding a &rsquo;+&rsquo;/&rsquo;-&rsquo; prefix to set/reset a single
 flag without affecting other <var class="var">flags</var> or changing <var class="var">loglevel</var>. When
@@ -1965,6 +1971,13 @@ for video, frame resolution or pixel format;
 for audio, sample format, sample rate, channel count or channel layout.
 </p>
 </dd>
+<dt><samp class="option">-drop_changed[:<var class="var">stream_specifier</var>] <var class="var">integer</var> (<em class="emph">input,per-stream</em>)</samp></dt>
+<dd><p>This boolean option determines whether a frame with differing frame parameters mid-stream
+gets dropped instead of leading to filtergraph reinitialization, as that would lead to loss
+of filter state. Generally useful to avoid corrupted yet decodable packets in live streaming
+inputs. Default is false.
+</p>
+</dd>
 <dt><samp class="option">-filter_threads <var class="var">nb_threads</var> (<em class="emph">global</em>)</samp></dt>
 <dd><p>Defines how many threads are used to process a filter pipeline. Each pipeline
 will produce a thread pool with this many threads available for parallel processing.
@@ -1982,6 +1995,19 @@ It is on by default, to explicitly disable it you need to specify <code class="c
 </dd>
 <dt><samp class="option">-stats_period <var class="var">time</var> (<em class="emph">global</em>)</samp></dt>
 <dd><p>Set period at which encoding progress/statistics are updated. Default is 0.5 seconds.
+</p>
+</dd>
+<dt><samp class="option">-print_graphs (<em class="emph">global</em>)</samp></dt>
+<dd><p>Prints execution graph details to stderr in the format set via -print_graphs_format.
+</p>
+</dd>
+<dt><samp class="option">-print_graphs_file <var class="var">filename</var> (<em class="emph">global</em>)</samp></dt>
+<dd><p>Writes execution graph details to the specified file in the format set via -print_graphs_format.
+</p>
+</dd>
+<dt><samp class="option">-print_graphs_format <var class="var">format</var> (<em class="emph">global</em>)</samp></dt>
+<dd><p>Sets the output format (available formats are: default, compact, csv, flat, ini, json, xml, mermaid, mermaidhtml)
+The default format is json.
 </p>
 </dd>
 <dt><samp class="option">-progress <var class="var">url</var> (<em class="emph">global</em>)</samp></dt>
@@ -2673,6 +2699,10 @@ transcoding, without copying the frames into the system memory.
 </p>
 <p>For it to work, both the decoder and the encoder must support QSV acceleration
 and no filters must be used.
+</p>
+</dd>
+<dt><samp class="option">videotoolbox</samp></dt>
+<dd><p>Use Video Toolbox hardware acceleration.
 </p></dd>
 </dl>
 
@@ -3064,6 +3094,12 @@ it may cause packet loss.
 <dd><p>Set an initial read burst time, in seconds, after which <samp class="option">-re/-readrate</samp>
 will be enforced.
 </p></dd>
+<dt><samp class="option">-readrate_catchup <var class="var">speed</var> (<em class="emph">input</em>)</samp></dt>
+<dd><p>If either the input or output is blocked leading to actual read speed falling behind the
+specified readrate, then this rate takes effect till the input catches up with the
+specified readrate. Must not be lower than the primary readrate.
+</p>
+</dd>
 <dt><samp class="option">-vsync <var class="var">parameter</var> (<em class="emph">global</em>)</samp></dt>
 <dt><samp class="option">-fps_mode[:<var class="var">stream_specifier</var>] <var class="var">parameter</var> (<em class="emph">output,per-stream</em>)</samp></dt>
 <dd><p>Set video sync method / framerate mode. vsync is applied to all output video streams
